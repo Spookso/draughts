@@ -1,0 +1,2 @@
+# draughts
+Python project
