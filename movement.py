@@ -13,10 +13,23 @@ def direction_check(board, start_row, start_col, end_row):
 
     return True
 
+def double_move_check(board, start_row, end_row, start_col, end_col, direction, side):
+    board = move(board, start_row, end_row, start_col, end_col, direction, side)[0]
+    try:
+        if move_check(board, end_row, end_col, end_row - 2, end_col + 2)[0]:
+            return True
+    except:
+        print("Tested Out of Bounds Move")
+    try:
+        if move_check(board, end_row, end_col, end_row - 2, end_col - 2)[0]:
+            return True
+    except:
+        print("Tested Out of Bounds Move")
+    return False
 
-def move(board, start_row, start_col, end_row, end_col):
-    moved = False
+def move_check(board, start_row, start_col, end_row, end_col):
     moving = False
+    double = False
 
     if direction_check(board, start_row, start_col, end_row):
 
@@ -45,31 +58,24 @@ def move(board, start_row, start_col, end_row, end_col):
             if board[start_row][start_col] != 2 and board[start_row][start_col] != 4:
                 if board[start_row + direction][start_col + side] != board[start_row][start_col] + 1:
                     moving = True
+                    if double_move_check(board, start_row, start_col, end_row, end_col, direction, side):
+                        double = True
             #If a piece is a king, is it moving over a normal piece?
             else:
                 if board[start_row + direction][start_col + side] != board[start_row][start_col] - 1:
                     moving = True
+                    if double_move_check(board, start_row, start_col, end_row, end_col, direction, side):
+                        double = True
         else:
             print("Trying to jump over same piece")
 
-        # moves the piece one space
-        if moving:
-            if end_row == start_row + direction and end_col == start_col + side:
-                print("Moved one space")
-                board[end_row][end_col] = board[start_row][start_col]
-                board[start_row][start_col] = 0
-                moved = True
+    return moving, double, direction, side
 
-        # jumps piece over another
 
-            # if the piece being jumped over is not on the other's own team, jump over it
-            elif end_row == start_row + (direction * 2) and end_col == start_col + (side * 2):
-                print("Moved over another piece")
-                board[end_row][end_col] = board[start_row][start_col]
-                board[start_row + direction][start_col + side] = 0
-                board[start_row][start_col] = 0
-                moved = True
-            else:
-                print("Cannot move there")
+def move(board, start_row, start_col, end_row, end_col, direction, side):
+    board[start_row + direction][start_col + side] = 0
+    board[end_row][end_col] = board[start_row][start_col]
+    board[start_row][start_col] = 0
+    print("Moved.")
 
-    return board, moved
+    return board
