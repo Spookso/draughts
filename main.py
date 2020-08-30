@@ -1,4 +1,5 @@
 import pygame, math, movement
+
 pygame.init()
 
 win = pygame.display.set_mode((800, 800))
@@ -8,16 +9,28 @@ clock = pygame.time.Clock()
 turn = 1
 correct_turn = True
 
+# board = [
+#     [0, 3, 0, 3, 0, 3, 0, 3],
+#     [3, 0, 3, 0, 3, 0, 3, 0],
+#     [0, 3, 0, 3, 0, 3, 0, 3],
+#     [0, 0, 0, 0, 0, 0, 0, 0],
+#     [0, 0, 0, 0, 0, 0, 0, 0],
+#     [1, 0, 1, 0, 1, 0, 1, 0],
+#     [0, 1, 0, 1, 0, 1, 0, 1],
+#     [1, 0, 1, 0, 1, 0, 1, 0],
+# ]
+
 board = [
-     [0, 3, 0, 3, 0, 3, 0, 3],
-     [3, 0, 3, 0, 3, 0, 3, 0],
-     [0, 3, 0, 3, 0, 3, 0, 3],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [0, 0, 0, 0, 0, 0, 0, 0],
-     [1, 0, 1, 0, 1, 0, 1, 0],
-     [0, 1, 0, 1, 0, 1, 0, 1],
-     [1, 0, 1, 0, 1, 0, 1, 0],
- ]
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1],
+    [0, 0, 0, 3, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 3, 0, 0, 0, 0],
+    [0, 0, 0, 0, 1, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0],
+
+]
 
 
 # Changes player turn
@@ -100,7 +113,7 @@ def draw_window(win):
             x += 100
         x = 50
         y += 100
-    
+
     pygame.display.update()
 
 
@@ -165,10 +178,13 @@ while run:
 
         # Moves the piece
         if correct_turn:
-            board, moved = movement.move(board, start_row, start_col, end_row, end_col)
+            moving, double, direction, side = movement.move_check(board, start_row, start_col, end_row, end_col)
             # if the move was valid, change the turn
-            if moved:
-                turn = turn_change(turn)
+            if moving:
+                board = movement.move(board, start_row, start_col, end_row, end_col, direction, side)[0]
+                if not double:
+                    turn = turn_change(turn)
+                double = False
             # else don't change the turn
             else:
                 print("Invalid move")
@@ -192,4 +208,3 @@ while run:
         king_check()
 
 pygame.quit()
-
