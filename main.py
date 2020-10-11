@@ -1,11 +1,16 @@
 import pygame, math, movement
 
+# Initiates the pygame library
 pygame.init()
 
+# Sets up a window of size 800 x 800 pixels with the tag 'resizable'
 win = pygame.display.set_mode((800, 800), pygame.RESIZABLE)
+# Sets the caption for the window as "Draughts"
 pygame.display.set_caption("Draughts")
+# allows pygame.time.Clock() to be accessed easily
 clock = pygame.time.Clock()
 
+# Initisalises variables
 turn = 1
 correct_turn = True
 
@@ -13,7 +18,7 @@ correct_turn = True
 width = 800
 height = 800
 
-
+# Declares the 'board' array, a 2D array that consisits of rows of numbers representing pieces or empty squares
 board = [
     [0, 3, 0, 3, 0, 3, 0, 3],
     [3, 0, 3, 0, 3, 0, 3, 0],
@@ -25,27 +30,16 @@ board = [
     [1, 0, 1, 0, 1, 0, 1, 0]
 ]
 
-# board = [[1001, 12030, "hello", "BUGRER", 32, 3, 3, 3],
-#          [1001, 12030, "hello", 23, 3, "e"],
-#          [1001, 12030, "hello", 23, 3],
-#          [1001, 12030, "hello", "BUGRER", 32, 3, 3, 3],
-#          [1001, 12030, "hello"],
-#          [1001, 12030, "hello", "BUGRER", 32, 3, 3, 3, 2, 56, "he", True, 3],
-#          [1001, 12030, "hello", 23, 3, True],
-#          [True, False, 12.2, False, True, False]]
-
 # board = [
 #     [0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 1],
+#     [0, 0, 2, 0, 0, 0, 3, 0],
 #     [0, 0, 0, 3, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 3, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 1, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0]
-#
+#     [0, 0, 0, 0, 0, 0, 3, 0],
+#     [0, 0, 0, 3, 0, 0, 0, 1],
+#     [0, 0, 1, 0, 1, 0, 0, 0],
+#     [0, 0, 0, 0, 0, 0, 1, 0],
+#     [0, 0, 0, 0, 0, 4, 0, 0]
 # ]
-
 
 # Changes player turn
 def turn_change(turn):
@@ -57,19 +51,18 @@ def turn_change(turn):
 
 # Checks if a player is out of pieces
 def win_check():
-    white = False
-    black = False
-    print("ROW BELOW")
+    white = True
+    black = True
     for row in board:
         for piece in row:
-            if board[row][col - 1] == 1 or board[row][col - 1] == 2:
-                white = True
-            if board[row][col - 1] == 3 or board[row][col - 1] == 4:
-                black = True
+            if piece == 1 or piece == 2:
+                white = False
+            elif piece == 3 or piece == 4:
+                black = False
 
-    if not white:
+    if white:
         return 1
-    if not black:
+    if black:
         return 2
 
     return 0
@@ -97,42 +90,42 @@ def draw_window(win):
     # Drawing out board
     for row in board:
         for square in row:
-            pygame.draw.rect(win, colour, (x, y, width / 8, height / 8))
+            pygame.draw.rect(win, colour, (x, y, round(width / 8), round(height / 8)))
             # Swapping colour
             if colour == (255, 255, 255):
                 colour = (100, 160, 100)
             else:
                 colour = (255, 255, 255)
-            x += width / 8
+            x += round(width / 8)
         # Swapping colour again for next row
         if colour == (255, 255, 255):
             colour = (100, 160, 100)
         else:
             colour = (255, 255, 255)
-        y += height / 8
+        y += round(height / 8)
         x = 0
 
     # Drawing pieces onto screen
-    x = (width / 8) / 2
-    y = (height / 8) / 2
+    x = round((width / 8) / 2)
+    y = round((height / 8) / 2)
     for row in board:
         for piece in row:
             if piece == 1:
-                pygame.draw.circle(win, (255, 0, 0), (x, y), width / 20)
+                pygame.draw.circle(win, (255, 0, 0), (x, y), round(width / 20))
             elif piece == 2:
-                pygame.draw.circle(win, (255, 255, 0), (x, y), width / 20)
+                pygame.draw.circle(win, (255, 255, 0), (x, y), round(width / 20))
             elif piece == 3:
-                pygame.draw.circle(win, (0, 0, 255), (x, y), width / 20)
+                pygame.draw.circle(win, (0, 0, 255), (x, y), round(width / 20))
             elif piece == 4:
-                pygame.draw.circle(win, (0, 255, 255), (x, y), width / 20)
-            x += width / 8
-        x = (width / 8) / 2
-        y += height / 8
+                pygame.draw.circle(win, (0, 255, 255), (x, y), round(width / 20))
+            x += round(width / 8)
+        x = round((width / 8) / 2)
+        y += round(height / 8)
 
     pygame.display.update()
 
 
-# Prints the board
+# Prints the board -- Used for testing purposes -- DELETE WHEN FINISHED
 def print_board():
     print("   0", " 1", " 2", " 3", " 4", " 5", " 6", " 7")
     count = 0
@@ -146,6 +139,8 @@ def print_board():
 
 selected = False
 progress = False
+saved_row, saved_col = 0, 0
+repeat = False
 run = True
 
 while run:
@@ -177,8 +172,14 @@ while run:
                 print(mouse_x, mouse_y)
 
                 if board[mouse_y][mouse_x] != 0:
-                    start_col, start_row = mouse_x, mouse_y
-                    selected = True
+                    if repeat:
+                        print("SAVED", saved_row, saved_col)
+                        if mouse_x == saved_row and mouse_y == saved_col:
+                            start_col, start_row = mouse_x, mouse_y
+                            selected = True
+                    else:
+                        start_col, start_row = mouse_x, mouse_y
+                        selected = True
         elif event.type == pygame.VIDEORESIZE:
             width, height = event.w, event.h
             surface = pygame.display.set_mode((width, height), pygame.RESIZABLE)
@@ -198,14 +199,18 @@ while run:
                 print("Not piece in turn 2")
 
         # Moves the piece
+        repeat = False
         if correct_turn:
             moving, double, direction, side, repeat = movement.move_check(board, start_row, start_col, end_row, end_col)
             # if the move was valid, change the turn
             if moving:
                 board = movement.move(board, start_row, start_col, end_row, end_col, direction, side)
-                if not double:
-                    if not repeat:
-                        turn = turn_change(turn)
+                # if the move was a piece taking move, check if it can move again
+                if double:
+                    repeat, saved_col, saved_row = movement.double_move_check(board, end_row, end_col, direction, side)
+
+                if not repeat:
+                    turn = turn_change(turn)
                 double = False
             # else don't change the turn
             else:
@@ -219,12 +224,12 @@ while run:
         correct_turn = True
 
         # Checks if one player is out of pieces
-        # if win_check() == 1:
-        #     print("Black wins!")
-        #     run = False
-        # elif win_check() == 2:
-        #     print("White wins!")
-        #     run = False
+        if win_check() == 1:
+            print("White wins!")
+            run = False
+        elif win_check() == 2:
+            print("Black wins!")
+            run = False
 
         # Checks if a piece can be kinged
         king_check()
