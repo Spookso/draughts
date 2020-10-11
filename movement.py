@@ -42,53 +42,33 @@ def move_check(board, start_row, start_col, end_row, end_col):
 
         print("start row:", start_row, "end row:", end_row, "start col:", start_col, "end col:", end_col, "direction:", direction, "side:", side)
 
-        # checks if it is a double move
-        if start_row + direction * 2 == end_row and start_col + side * 2 == end_col:
-            # Add this back when double moves are fixed
-            # double = True
-            legal = True
-            print("ITS A DOUBLE MOVE")
+        # if the piece is trying to move to a square on the board
+        if -1 < end_row < 8 and -1 < end_col < 8:
 
-        # Otherwise, is it a single move?
-        elif start_row + direction == end_row and start_col + side == end_col:
-            legal = True
+            # checks if it is a double move
+            if start_row + direction * 2 == end_row and start_col + side * 2 == end_col:
+                if board[start_row + direction][start_col + side] != 0:
+                    if board[start_row + direction][start_col + side] != board[start_row][start_col]:
+                        if board[start_row][start_col] == 1 or board[start_row][start_col] == 3:
+                            if board[start_row + direction][start_col + side] != board[start_row][start_col] + 1:
+                                double = True
+                                legal = True
+                        elif board[start_row + direction][start_col + side] != board[start_row][start_col] - 1:
+                            double = True
+                            legal = True
 
-        # If the place it is moving to is empty and the move is legal, it can move
-        if board[end_row][end_col] == 0 and legal:
-            moving = True
+            # Otherwise, is it a single move?
+            if start_row + direction == end_row and start_col + side == end_col:
+                legal = True
 
-        # This is supposed to check if a second double move is possible
-        # But at the moment its having some issues
+            # If the place it is moving to is empty and the move is legal, it can move
+            if board[end_row][end_col] == 0 and legal:
+                moving = True
 
-        # if double:
-        #     new_row = end_row - 2
-        #     new_col = end_col + 2
-        #     if board[start_row][start_col] == 2 or board[start_row][start_col] == 4:
-        #         for i in range(1, 2):
-        #             for attempt in range(1, 2):
-        #                 try:
-        #                     print("END ROW HERE", end_row)
-        #                     if move_check(board, end_row, end_col, new_row, new_col):
-        #                         repeat = True
-        #                     print("END ROW HERE", end_row)
-        #                 except:
-        #                     print("out of bounds trying again")
-        #                 new_col = end_col - 2
-        #
-        #             new_row = end_row + 2
-        #             new_col = end_col + 2
-        #     else:
-        #         for attempt in range(1, 2):
-        #             try:
-        #                 print("END ROW HERE", end_row)
-        #                 if move_check(board, end_row, end_col, new_row, new_col):
-        #                     repeat = True
-        #                 print("END ROW HERE", end_row)
-        #             except:
-        #                 print("out of bounds trying again")
-        #             new_col = end_col - 2
+            # This is supposed to check if a second double move is possible
+            # But at the moment its having some issues
 
-    return moving, double, direction, side, repeat
+        return moving, double, direction, side, repeat
 
 
 def move(board, start_row, start_col, end_row, end_col, direction, side):
@@ -98,3 +78,28 @@ def move(board, start_row, start_col, end_row, end_col, direction, side):
     print("Moved.")
 
     return board
+
+def double_move_check(board, row, col, direction, side):
+    repeat = False
+    new_row = row + (2 * direction)
+    new_col = col + 2
+    if board[row][col] == 2 or board[row][col] == 4:
+        for i in range(0, 2):
+            for attempt in range(0, 2):
+                print("ROW:", row, "NEW_ROW:", new_row, "COL:", col,  "NEW_COL", new_col, "DIRECTION", direction, "SIDE", side)
+                if move_check(board, row, col, new_row, new_col)[0]:
+                    repeat = True
+                print("REPEAT:", repeat)
+                new_col = col - 2
+
+            new_row = row - (2 * direction)
+            new_col = col + 2
+    else:
+        for attempt in range(0, 2):
+            print("ROW:", row, "NEW_ROW:", new_row, "COL:", col,  "NEW_COL", new_col, "DIRECTION", direction, "SIDE", side)
+            if move_check(board, row, col, new_row, new_col)[0]:
+                repeat = True
+            print("REPEAT:", repeat)
+            new_col = col - 2
+
+    return repeat, row, col
