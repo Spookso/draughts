@@ -18,7 +18,15 @@ correct_turn = True
 width = 800
 height = 800
 
-# Declares the 'board' array, a 2D array that consisits of rows of numbers representing pieces or empty squares
+# sets whether there will be an ai opponent
+if input("Play against the computer? ") == "Yes":
+    ai = True
+else:
+    ai = False
+
+depth = 1
+
+# Declares the 'board' array, a 2D array that consists of rows of numbers representing pieces or empty squares
 board = [
     [0, 3, 0, 3, 0, 3, 0, 3],
     [3, 0, 3, 0, 3, 0, 3, 0],
@@ -29,7 +37,7 @@ board = [
     [0, 1, 0, 1, 0, 1, 0, 1],
     [1, 0, 1, 0, 1, 0, 1, 0]
 ]
-
+#
 # board = [
 #     [0, 0, 0, 0, 0, 0, 0, 0],
 #     [0, 0, 2, 0, 0, 0, 3, 0],
@@ -40,6 +48,7 @@ board = [
 #     [0, 0, 0, 0, 0, 0, 1, 0],
 #     [0, 0, 0, 0, 0, 4, 0, 0]
 # ]
+
 
 # Changes player turn
 def turn_change(turn):
@@ -124,25 +133,12 @@ def draw_window(win):
 
     pygame.display.update()
 
-
-# Prints the board -- Used for testing purposes -- DELETE WHEN FINISHED
-def print_board():
-    print("   0", " 1", " 2", " 3", " 4", " 5", " 6", " 7")
-    count = 0
-    for row in board:
-        print(count, row)
-        count += 1
-    print()
-
-
-#print_board()
-
 selected = False
 progress = False
 saved_row, saved_col = 0, 0
 repeat = False
-run = True
 
+run = True
 while run:
     clock.tick(60)
     draw_window(win)
@@ -184,19 +180,35 @@ while run:
             width, height = event.w, event.h
             surface = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 
+    if turn == 2 and ai:
+        progress = True
+
+
     # Checks whether an attempt at a move should be made
     if progress:
-        print("turn:", turn, "start row:", start_row, "start col:", start_col, "piece:", board[start_row][start_col])
-        print()
-        # Checks whether it is moving the right piece for their turn
         if turn == 1:
-            if board[start_row][start_col] != 1 and board[start_row][start_col] != 2:
-                correct_turn = False
-                print("Not piece in turn 1")
-        else:
-            if board[start_row][start_col] != 3 and board[start_row][start_col] != 4:
-                correct_turn = False
-                print("Not piece in turn 2")
+            print("turn:", turn, "start row:", start_row, "start col:", start_col, "piece:", board[start_row][start_col])
+            print()
+            # Checks whether it is moving the right piece for their turn
+            if turn == 1:
+                if board[start_row][start_col] != 1 and board[start_row][start_col] != 2:
+                    correct_turn = False
+                    print("Not piece in turn 1")
+            elif turn == 2 and not ai:
+                if board[start_row][start_col] != 3 and board[start_row][start_col] != 4:
+                    correct_turn = False
+                    print("Not piece in turn 2")
+
+        elif ai:
+            # make each possibility a class that can basically make another version of its self as a new class
+            move_nums, board_list, depth = movement.calculate_moves(new_board, 3, depth)
+            scores, greatest = movement.calculate_score(board_list, 3)
+            while depth > 0:
+                for board
+            correct_turn = True
+            start_row, start_col, end_row, end_col, direction, side = move_nums[greatest]
+
+
 
         # Moves the piece
         repeat = False
@@ -215,8 +227,6 @@ while run:
             # else don't change the turn
             else:
                 print("Invalid move")
-
-            #print_board()
 
         # resets the progress with clicking on a piece
         progress = False
