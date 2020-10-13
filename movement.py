@@ -65,10 +65,7 @@ def move_check(board, start_row, start_col, end_row, end_col):
             if board[end_row][end_col] == 0 and legal:
                 moving = True
 
-            # This is supposed to check if a second double move is possible
-            # But at the moment its having some issues
-
-        return moving, double, direction, side, repeat
+    return moving, double, direction, side, repeat
 
 
 def move(board, start_row, start_col, end_row, end_col, direction, side):
@@ -103,3 +100,44 @@ def double_move_check(board, row, col, direction, side):
             new_col = col - 2
 
     return repeat, row, col
+
+def calculate_moves(board, team, depth):
+    move_nums = []
+    board_list = []
+    for start_row in board:
+        start_col = 0
+        for piece in start_row:
+            if piece == team or piece == team + 1:
+                for end_row in range(0, 8):
+                    for end_col in range(0, 8):
+                        if move_check(board, start_row, start_col, end_row, end_col)[0]:
+                            move_nums.append([start_row, start_col, end_row, end_col, move_check(board, start_row, start_col, end_row, end_col)[2], move_check(board, start_row, start_col, end_row, end_col)[3]])
+
+            start_col += 1
+
+    for i in move_nums:
+        board_list.append(move(board, move_nums[i][0], move_nums[i][1], move_nums[i][2], move_nums[i][3], move_nums[i][4], move_nums[i][5]))
+
+    depth -= 1
+    return move_nums, board_list, depth
+
+def calculate_score(board_list, team):
+    scores = []
+    for leaf in board_list:
+        score = 0
+        for row in leaf:
+            for piece in row:
+                if piece != team and piece != team + 1:
+                    score -= 1
+                elif piece == team + 1:
+                    score += 3
+                elif piece == team:
+                    score += 1
+        scores.append(score)
+
+    greatest = 0
+    for score in scores:
+        if score > scores[greatest]:
+            greatest = scores.index(score)
+
+    return scores, greatest
