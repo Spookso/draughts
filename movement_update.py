@@ -136,7 +136,7 @@ class leaf():
                     start_col += 1
                 start_row += 1
         else:
-            start_row, start_col = forced
+            start_row, start_col = self.forced
             if double_move_check(self.own_board, start_row, start_col, 1, 1)[0]:
                 end_row = double_move_check(self.own_board, start_row, start_col, 1, 1)[3]
                 end_col = double_move_check(self.own_board, start_row, start_col, 1, 1)[4]
@@ -161,5 +161,6 @@ class leaf():
         self.child_list.append(leaf(new_board, moves, score, self, self.team_swap(), force))
 
 
-    # need to figure out how to find best ending score basically
-    # maybe do this last function outside class
+class petal(leaf):
+    def score(self):
+        pass
