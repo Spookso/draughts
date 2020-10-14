@@ -19,12 +19,10 @@ width = 800
 height = 800
 
 # sets whether there will be an ai opponent
-# if input("Play against the computer? ") == "Yes":
-#     ai = True
-# else:
-#     ai = False
-
-ai = True
+if input("Play against the computer? ") == "Yes":
+    ai = True
+else:
+    ai = False
 
 depth = 1
 
@@ -249,7 +247,10 @@ while run:
                     print("Somethign wreong")
                 start.best_child = start.child_list[highest]
 
-            start_row, start_col, end_row, end_col, direction, side = start.best_child.own_move
+            try:
+                start_row, start_col, end_row, end_col, direction, side = start.best_child.own_move
+            except:
+                start_row, start_col, end_row, end_col, direction, side = 5, 1, 4, 2, -1, 1
 
         # Moves the piece
         repeat = False
@@ -260,7 +261,7 @@ while run:
                 board = movement.move(board, start_row, start_col, end_row, end_col, direction, side)
                 # if the move was a piece taking move, check if it can move again
                 if double:
-                    repeat, saved_col, saved_row = movement.double_move_check(board, end_row, end_col, direction, side)
+                    repeat, saved_col, saved_row, work_row, work_col = movement.double_move_check(board, end_row, end_col, direction, side)
 
                 if not repeat:
                     turn = turn_change(turn)
