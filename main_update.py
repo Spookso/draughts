@@ -1,4 +1,4 @@
-import pygame, math, movement
+import pygame, math, movement, time
 
 # Initiates the pygame library
 pygame.init()
@@ -19,15 +19,17 @@ width = 800
 height = 800
 
 # sets whether there will be an ai opponent
-if input("Play against the computer? ") == "Yes":
-    ai = True
-else:
-    ai = False
+# if input("Play against the computer? ") == "Yes":
+#     ai = True
+# else:
+#     ai = False
 
-depth = 1
+ai = False
+calculated = False
+print("ai true")
 
-# Declares the 'board' array, a 2D array that consists of rows of numbers representing pieces or empty squares
-board = [
+# Declares the 'current_board' array, a 2D array that consists of rows of numbers representing pieces or empty squares
+current_board = [
     [0, 3, 0, 3, 0, 3, 0, 3],
     [3, 0, 3, 0, 3, 0, 3, 0],
     [0, 3, 0, 3, 0, 3, 0, 3],
@@ -37,8 +39,10 @@ board = [
     [0, 1, 0, 1, 0, 1, 0, 1],
     [1, 0, 1, 0, 1, 0, 1, 0]
 ]
-#
-# board = [
+
+movelist = []
+
+# current_board = [
 #     [0, 0, 0, 0, 0, 0, 0, 0],
 #     [0, 0, 2, 0, 0, 0, 3, 0],
 #     [0, 0, 0, 3, 0, 0, 0, 0],
@@ -59,7 +63,7 @@ def turn_change(turn):
 
 
 # Checks if a player is out of pieces
-def win_check():
+def win_check(board):
     white = True
     black = True
     for row in board:
@@ -78,7 +82,7 @@ def win_check():
 
 
 # checks whether a piece will be kinged
-def king_check():
+def king_check(board):
     num = 0
     for piece in board[0]:
         if piece == 1:
@@ -90,8 +94,25 @@ def king_check():
             board[7][num] = 4
         num += 1
 
+def update(moves):
+    board = [
+        [0, 3, 0, 3, 0, 3, 0, 3],
+        [3, 0, 3, 0, 3, 0, 3, 0],
+        [0, 3, 0, 3, 0, 3, 0, 3],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 1, 0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0]
+    ]
+    print("updating")
+    for i in range(0, len(moves)):
+        board = movement.move(board, moves[i][0], moves[i][1], moves[i][2], moves[i][3], moves[i][4], moves[i][5])
+        king_check(board)
 
-def draw_window(win):
+    return board
+
+def draw_window(win, board):
     colour = (255, 255, 255)
     x = 0
     y = 0
@@ -140,8 +161,8 @@ repeat = False
 
 run = True
 while run:
+    human = False
     clock.tick(60)
-    draw_window(win)
 
     mouse_x, mouse_y = pygame.mouse.get_pos()
 
@@ -163,6 +184,7 @@ while run:
                 else:
                     end_col, end_row = mouse_x, mouse_y
                 progress = True
+                human = True
             # If a piece has not been selected
             else:
                 mouse_x = math.floor((mouse_x / (width / 8)))
@@ -170,7 +192,7 @@ while run:
 
                 print(mouse_x, mouse_y)
 
-                if board[mouse_y][mouse_x] != 0:
+                if current_board[mouse_y][mouse_x] != 0:
                     if repeat:
                         print("SAVED", saved_row, saved_col)
                         # if it is consecutive move, ensure that the same piece is moving
@@ -190,79 +212,67 @@ while run:
     # Checks whether an attempt at a move should be made
     if progress:
         if turn == 1:
-            print("turn:", turn, "start row:", start_row, "start col:", start_col, "piece:", board[start_row][start_col])
+            print("turn:", turn, "start row:", start_row, "start col:", start_col, "piece:", current_board[start_row][start_col])
             print()
             # Checks whether it is moving the right piece for their turn
             if turn == 1:
-                if board[start_row][start_col] != 1 and board[start_row][start_col] != 2:
+                if current_board[start_row][start_col] != 1 and current_board[start_row][start_col] != 2:
                     correct_turn = False
                     print("Not piece in turn 1")
             elif turn == 2 and not ai:
-                if board[start_row][start_col] != 3 and board[start_row][start_col] != 4:
+                if current_board[start_row][start_col] != 3 and current_board[start_row][start_col] != 4:
                     correct_turn = False
                     print("Not piece in turn 2")
 
         elif ai:
-            best_twigs = []
-            highest = 0
-            start = movement.leaf(board, [1, 1, 1, 1, 0, 0], '', '', 3, '')
+            start = movement.leaf(current_board, movelist, '', 1, [3, 4])
             start.calculate_moves() # every move ai can do
+            start.best_child = 0
             for leaf in start.child_list:
                 leaf.calculate_moves() # every move the player can do
                 for petal in leaf.child_list:
                     petal.calculate_moves() # every counter the ai can play
                     for twig in petal.child_list:
-                        try:
-                            if twig.own_score > petal.child_list[highest].own_score:
-                                highest = petal.child_list.index(twig)
-                        except:
-                            print("SOMETHING WENT WRONG")
-                    try:
-                        petal.best_child = petal.child_list[highest]
-                    except:
-                        leaf.child_list.remove(petal)
+                        # draw_window(win, current_board)
+                        # twig.score_self(update(movelist))
+                        twig.score_self()
+                        if twig.score > petal.child_list[petal.best_child].score:
+                            petal.best_child = petal.child_list.index(twig)
+                    if len(leaf.child_list[leaf.best_child].child_list) > 0:
+                        if len(petal.child_list) > 0:
+                            if petal.child_list[petal.best_child].score < leaf.child_list[leaf.best_child].child_list[leaf.child_list[leaf.best_child].best_child].score:
+                                leaf.best_child = leaf.child_list.index(petal)
+                if len(leaf.child_list) > 0:
+                    if len(leaf.child_list[leaf.best_child].child_list) > 0:
+                        if len(leaf.child_list[leaf.best_child].child_list[leaf.child_list[leaf.best_child].best_child].child_list) > 0:
+                            if len(start.child_list) > 0:
+                                if leaf.child_list[leaf.best_child].child_list[leaf.child_list[leaf.best_child].best_child].score > start.child_list[start.best_child].child_list[start.child_list[start.best_child].best_child].child_list[start.child_list[start.best_child].child_list[start.child_list[start.best_child].best_child].best_child].score:
+                                    start.best_child = start.child_list.index(leaf)
+            print("length", len(start.child_list))
+            print(start.best_child)
+            # this bit is not working at all
+            # figure out which index of the move list is the correct one
+            # possibly re-write the best move finding thing
+            print("move_list", start.child_list[start.best_child].move_list[-3])
+            start_row, start_col, end_row, end_col, direction, side = start.child_list[start.best_child].move_list[-3]
+            correct_turn = True
+            progress = False
 
-            lowest = 0
-            for leaf in start.child_list:
-                for petal in leaf.child_list:
-                    try:
-                        if petal.best_child.own_score < leaf.child_list[lowest].best_child.own_score:
-                            try:
-                                lowest = petal.child_list.index(petal)
-                            except ValueError:
-                                print("NOT IN LIST?")
-                    except AttributeError:
-                        print("Got an int instead lol")
-                try:
-                    leaf.best_child = leaf.child_list[lowest]
-                except:
-                    start.child_list.remove(leaf)
-
-            highest = 0
-            for leaf in start.child_list:
-                try:
-                    if leaf.best_child.best_child.own_score < start.child_list[highest].best_child.best_child.own_score:
-                        highest = leaf.child_list.index(leaf)
-                except AttributeError:
-                    print("Somethign wreong")
-                start.best_child = start.child_list[highest]
-
-            try:
-                start_row, start_col, end_row, end_col, direction, side = start.best_child.own_move
-            except:
-                start_row, start_col, end_row, end_col, direction, side = 5, 1, 4, 2, -1, 1
-
-        # Moves the piece
+        # moves the piece
         repeat = False
         if correct_turn:
-            moving, double, direction, side, repeat = movement.move_check(board, start_row, start_col, end_row, end_col)
+            print("HELLO")
+            moving, double, direction, side, repeat = movement.move_check(current_board, start_row, start_col, end_row, end_col)
             # if the move was valid, change the turn
             if moving:
-                board = movement.move(board, start_row, start_col, end_row, end_col, direction, side)
+                print("start row", start_row)
+                movelist.append([start_row, start_col, end_row, end_col, direction, side])
+                current_board = movement.move(current_board, start_row, start_col, end_row, end_col, direction, side)
                 # if the move was a piece taking move, check if it can move again
                 if double:
-                    repeat, saved_col, saved_row, work_row, work_col = movement.double_move_check(board, end_row, end_col, direction, side)
-
+                    repeat, saved_col, saved_row, work_row, work_col = movement.double_move_check(current_board, end_row, end_col, direction, side)
+                # somehow ai gets stuck when it repeats
+                # keeps recalculating moves - not sure exactly what's wrong
                 if not repeat:
                     turn = turn_change(turn)
                 double = False
@@ -274,16 +284,18 @@ while run:
         progress = False
         selected = False
         correct_turn = True
+        calculated = False
+        current_board = update(movelist)
 
         # Checks if one player is out of pieces
-        if win_check() == 1:
-            print("White wins!")
-            run = False
-        elif win_check() == 2:
-            print("Black wins!")
-            run = False
+        # if win_check(current_board) == 1:
+        #     print("White wins!")
+        #     run = False
+        # elif win_check(current_board) == 2:
+        #     print("Black wins!")
+        #     run = False
 
         # Checks if a piece can be kinged
-        king_check()
-
+        king_check(current_board)
+    draw_window(win, current_board)
 pygame.quit()
