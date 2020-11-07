@@ -10,73 +10,142 @@ pygame.display.set_caption("Draughts")
 # allows pygame.time.Clock() to be accessed easily
 clock = pygame.time.Clock()
 
-# Initisalises variables
-turn = 1
-correct_turn = True
-
 # Default window size
 width = 800
 height = 800
 
-screen = 2
+winner = 1
 
-ai = True
-random_ai = True
-ai_repeat = False
-calculated = False
-print("ai true")
+texts = []
+buttons = []
 
-work_row = None
-work_col = None
+pygame.mixer.init()
+pygame.mixer.music.set_volume(0.5)
 
-start_row = 0
-
-# texts = []
-
-
-# Declares the 'current_board' array, a 2D array that consists of rows of numbers representing pieces or empty squares
-current_board = [
-    [0, 3, 0, 3, 0, 3, 0, 3],
-    [3, 0, 3, 0, 3, 0, 3, 0],
-    [0, 3, 0, 3, 0, 3, 0, 3],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [1, 0, 1, 0, 1, 0, 1, 0],
-    [0, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 0]
-]
-
-movelist = []
-
-# current_board = [
-#     [0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 2, 0, 0, 0, 3, 0],
-#     [0, 0, 0, 3, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 3, 0],
-#     [0, 0, 0, 3, 0, 0, 0, 1],
-#     [0, 0, 1, 0, 1, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 1, 0],
-#     [0, 0, 0, 0, 0, 4, 0, 0]
-# ]
-
-saved_board = []
-for row in current_board:
-    saved_board.append(row)
-
-class text():
-    def __init__(self, x, y, writing, size, is_bold):
+class Text():
+    def __init__(self, x, y, writing, colour, size, is_bold, screen):
         self.x = x
         self.y = y
+        self.start_x = x
+        self.start_y = y
+        self.colour = colour
+        self.writing = writing
         self.size = size
+        self.start_size = size
         self.is_bold = is_bold
-        self.size_ratio = 1
+        self.screen = screen
+        self.update_size(800, 800)
+
+    def update_size(self, width, height):
+        self.size = round(self.start_size * (width / 800))
+        self.x = round(self.start_x * (width / 800))
+        self.y = round(self.start_y * (height / 800))
         self.font = pygame.font.SysFont('cambria', self.size, self.is_bold)
 
-    def update_size(self, old, new):
-        self.size_ratio = new/old
-        self.size *= self.size_ratio
-        self.x *= self.size_ratio
-        self.y *= self.size_ratio
+    def draw(self, win):
+        current = self.font.render(self.writing, True, self.colour)
+        win.blit(current, (self.x, self.y))
+
+
+class Button():
+    def __init__(self, x, y, width, height, text='', outline_colour=False):
+        self.x = x
+        self.y = y
+        self.width = width
+        self.height = height
+
+        self.start_x = x
+        self.start_y = y
+        self.start_width = width
+        self.start_height = height
+
+        self.text = text
+        self.text_size = round(width / 6)
+        self.colour = (255, 253, 208)
+        self.outline_colour = outline_colour
+
+        self.clicked = False
+        self.click_delay = 0
+
+    def is_over(self, pos):
+        if pos[0] > self.x and pos[0] < self.x + self.width:
+            if pos[1] > self.y and pos[1] < self.y + self.height:
+                return True
+
+        return False
+
+    def highlight_check(self, mouse_pos):
+        if self.click_delay <= 0:
+            if self.is_over(mouse_pos):
+                self.colour = (229, 203, 144)
+                return True
+            else:
+                self.colour = (255, 253, 208)
+        else:
+            self.click_delay -= 1
+        return False
+
+    def click_darken(self):
+        self.colour = (165, 144, 121)
+        self.click_delay = 0
+        self.clicked = True
+
+    def update_size(self, width, height):
+        self.width = round(self.start_width * (width / 800))
+        self.height = round(self.start_height * (height / 800))
+        self.x = round(self.start_x * (width / 800))
+        self.y = round(self.start_y * (height / 800))
+        self.text_size = round(self.width / 6)
+
+    def draw(self, win):
+        if self.outline_colour != False:
+            pygame.draw.rect(win, self.outline_colour, (self.x - 2, self.y - 2, self.width + 4, self.height + 4), 0)
+
+        pygame.draw.rect(win, self.colour, (self.x, self.y, self.width, self.height), 0)
+
+        if self.text != '':
+            font = pygame.font.SysFont('cambria', self.text_size)
+            text = font.render(self.text, 1, (0, 0, 0))
+            win.blit(text, (self.x + (self.width / 2 - text.get_width() / 2), self.y + (self.height / 2 - text.get_height() / 2)))
+
+
+def set_up():
+    screen = 1
+    ai = False
+    ai_repeat = False
+    double_ai = False
+    work_row = None
+    work_col = None
+
+    selected = False
+    progress = False
+    saved_row, saved_col = 0, 0
+    repeat = False
+
+    turn = 1
+    correct_turn = True
+
+    # Declares the 'current_board' array, a 2D array that consists of rows of numbers representing pieces or empty squares
+    current_board = [
+        [0, 3, 0, 3, 0, 3, 0, 3],
+        [3, 0, 3, 0, 3, 0, 3, 0],
+        [0, 3, 0, 3, 0, 3, 0, 3],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [1, 0, 1, 0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0]
+    ]
+
+    return screen, ai, ai_repeat, work_col, work_row, selected, progress, saved_row, saved_col, repeat, turn, correct_turn, current_board, double_ai
+
+def play_sound_effect(type):
+    if type == 1:
+        pygame.mixer.music.load("click_one.wav")
+    else:
+        pygame.mixer.music.load("click_two.wav")
+    pygame.mixer.music.play()
+
 
 # Changes player turn
 def turn_change(turn):
@@ -118,48 +187,23 @@ def king_check(board):
             board[7][num] = 4
         num += 1
 
-def update(moves):
-    board = [
-        [0, 3, 0, 3, 0, 3, 0, 3],
-        [3, 0, 3, 0, 3, 0, 3, 0],
-        [0, 3, 0, 3, 0, 3, 0, 3],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0],
-        [1, 0, 1, 0, 1, 0, 1, 0],
-        [0, 1, 0, 1, 0, 1, 0, 1],
-        [1, 0, 1, 0, 1, 0, 1, 0]
-    ]
-    # print("updating")
-    for i in range(0, len(moves)):
-        board = movement.move(board, moves[i][0], moves[i][1], moves[i][2], moves[i][3], moves[i][4], moves[i][5])
-        king_check(board)
+def draw_window(win, board, width, height):
+    if screen == 1:
+        win.fill((255, 255, 255))
+        for text in texts:
+            if text.screen == 1:
+                text.draw(win)
+        pygame.draw.circle(win, (255, 0, 0), (160 * width / 800, 300 * height / 800), round(width / 18))
+        pygame.draw.circle(win, (0, 0, 255), (240 * width / 800, 250 * height / 800), round(width / 18))
+        pygame.draw.circle(win, (255, 0, 0), (320 * width / 800, 300 * height / 800), round(width / 18))
+        pygame.draw.circle(win, (0, 0, 255), (400 * width / 800, 250 * height / 800), round(width / 18))
+        pygame.draw.circle(win, (255, 0, 0), (480 * width / 800, 300 * height / 800), round(width / 18))
+        pygame.draw.circle(win, (0, 0, 255), (560 * width / 800, 250 * height / 800), round(width / 18))
+        pygame.draw.circle(win, (255, 0, 0), (640 * width / 800, 300 * height / 800), round(width / 18))
 
-    return board
-
-def score_board(board):
-    score = 0
-    for row in board:
-        for piece in row:
-            if piece == 3:
-                score += 1
-            elif piece == 4:
-                score += 2
-            elif piece == 1:
-                score -= 1
-            elif piece == 2:
-                score -= 2
-
-    return score
-
-def draw_window(win, board):
-    # if screen == 1:
-    #     for text in texts:
-    #         current = font.render(text.writing, 1, (0, 0, 0))
-    #         # add colour for texts
-    #         # fix this
-    #     win.fill((255, 255, 255))
-    #     win.blit(title, (font_x * font_size_ratio, font_y * font_size_ratio))
-    if screen == 2:
+        for button in buttons:
+            button.draw(win)
+    elif screen == 2:
         colour = (255, 255, 255)
         x = 0
         y = 0
@@ -199,21 +243,52 @@ def draw_window(win, board):
             x = round((width / 8) / 2)
             y += round(height / 8)
 
+            if len(texts) > 1:
+                texts[-1].draw(win)
+    elif screen == 3:
+        pass
+
     pygame.display.update()
 
-selected = False
-progress = False
-saved_row, saved_col = 0, 0
-repeat = False
+screen, ai, ai_repeat, work_col, work_row, selected, progress, saved_row, saved_col, repeat, turn, correct_turn, current_board, double_ai = set_up()
 
-# texts.append(text(110, 110, 100, False))
+texts.append(Text(110, 110, "English Draughts", (0, 0, 0), 100, False, 1))
+p_button = Button(40, 500, 300, 80, "Player VS Player", (0, 0, 0))
+ai_button = Button(460, 500, 300, 80, "Player VS AI", (0, 0, 0))
+dai_button = Button(250, 650, 300, 80, "AI VS AI", (0, 0, 0))
+buttons.append(p_button)
+buttons.append(ai_button)
+buttons.append(dai_button)
 
 run = True
 while run:
     clock.tick(60)
     keys = pygame.key.get_pressed()
 
+    if screen == 2:
+        if keys[pygame.K_ESCAPE]:
+            if len(texts) > 1:
+                texts.remove(texts[-1])
+            screen, ai, ai_repeat, work_col, work_row, selected, progress, saved_row, saved_col, repeat, turn, correct_turn, current_board, double_ai = set_up()
+
     mouse_x, mouse_y = pygame.mouse.get_pos()
+
+    if screen == 1:
+        for button in buttons:
+            button.highlight_check((mouse_x, mouse_y))
+
+        if p_button.clicked:
+            screen = 2
+            p_button.clicked = False
+        elif ai_button.clicked:
+            ai = True
+            screen = 2
+            ai_button.clicked = False
+        elif dai_button.clicked:
+            screen = 2
+            ai = True
+            double_ai = True
+            dai_button.clicked = False
 
     for event in pygame.event.get():
         # quits game
@@ -222,8 +297,12 @@ while run:
 
         # Checks if mouse is clicked
         if event.type == pygame.MOUSEBUTTONDOWN:
+            if screen == 1:
+                for button in buttons:
+                    if button.highlight_check((mouse_x, mouse_y)):
+                        button.click_darken()
             # If a piece is already selected
-            if screen == 2:
+            elif screen == 2:
                 if selected:
                     mouse_x = math.floor((mouse_x / (width / 8)))
                     mouse_y = math.floor((mouse_y / (height / 8)))
@@ -250,19 +329,26 @@ while run:
                         else:
                             start_col, start_row = mouse_x, mouse_y
                         selected = True
+                        play_sound_effect(1)
         elif event.type == pygame.VIDEORESIZE:
-            # for text in texts:
-            #     text.update_size(width, event.width)
             width, height = event.w, event.h
             surface = pygame.display.set_mode((width, height), pygame.RESIZABLE)
 
+            for text in texts:
+                text.update_size(width, height)
+            for button in buttons:
+                button.update_size(width, height)
+
+
     if turn == 2 and ai:
+        progress = True
+    if screen == 2 and double_ai:
         progress = True
 
 
     # Checks whether an attempt at a move should be made
     if progress:
-        if turn == 1:
+        if turn == 1 and not double_ai:
             # print("turn:", turn, "start row:", start_row, "start col:", start_col, "piece:", current_board[start_row][start_col])
             # print()
             # Checks whether it is moving the right piece for their turn
@@ -275,14 +361,20 @@ while run:
                     correct_turn = False
                     print("Not piece in turn 2")
 
-        elif random_ai:
+        elif ai:
+            if turn == 1:
+                moveables = [1, 2]
+            else:
+                moveables = [3, 4]
+            # problem with ai doing different double moves when moving multiple times
+            # fix by cross checking again the work row and col that were saved already
             legal_moves = []
             weights = []
             start_row = 0
             if not ai_repeat:
                 for start_row in range(0, 8):
                     for start_col in range(0, 8):
-                        if current_board[start_row][start_col] in [3, 4]:
+                        if current_board[start_row][start_col] in moveables:
                             for end_row in range(0, 8):
                                 for end_col in range(0, 8):
                                     move_check_info = movement.move_check(current_board, start_row, start_col, end_row, end_col)
@@ -323,17 +415,17 @@ while run:
                     saved = [end_row, end_col]
 
             except:
-                print("NO MOVES")
+                if len(texts) < 2:
+                    texts.append(Text(200, 110, "Draw!", (0, 0, 0), 100, True, 1))
                 correct_turn = False
 
         # moves the piece
         repeat = False
         if correct_turn:
+            play_sound_effect(2)
             moving, double, direction, side, repeat = movement.move_check(current_board, start_row, start_col, end_row, end_col)
             # if the move was valid, change the turn
             if moving:
-                movelist.append([start_row, start_col, end_row, end_col, direction, side])
-                print(movelist)
                 current_board = movement.move(current_board, start_row, start_col, end_row, end_col, direction, side)
                 # if the move was a piece taking move, check if it can move again
                 if double:
@@ -351,18 +443,15 @@ while run:
         progress = False
         selected = False
         correct_turn = True
-        calculated = False
-        current_board = update(movelist)
 
         # Checks if one player is out of pieces
-        if win_check(current_board) == 1:
-            print("White wins!")
-            run = False
-        elif win_check(current_board) == 2:
-            print("Black wins!")
-            run = False
+        if len(texts) < 2:
+            if win_check(current_board) == 1:
+                texts.append(Text(200, 110, "Blue Wins!", (0, 0, 0), 100, True, 1))
+            elif win_check(current_board) == 2:
+                texts.append(Text(200, 110, "Red Wins!", (0, 0, 0), 100, True, 1))
 
         # Checks if a piece can be kinged
         king_check(current_board)
-    draw_window(win, current_board)
+    draw_window(win, current_board, width, height)
 pygame.quit()
