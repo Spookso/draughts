@@ -529,8 +529,6 @@ while run:
             elif win_check(current_board) == 2: # if blue team has no more pieces left
                 texts.append(Text(150, 110, "Red Wins!", (0, 0, 0), 100, True, 1)) # text is added declaring that the red team won
 
-        print(repeat)
-
         king_check(current_board) # checks if any pieces can be kinged
     draw_window(win, current_board, width, height) # the game window is updated
 
